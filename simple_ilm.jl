@@ -1,5 +1,5 @@
 
-include("agent.jl")
+include("simple_agent.jl")
 include("utilities.jl")
     
 n=8
