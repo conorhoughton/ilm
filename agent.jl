@@ -39,8 +39,6 @@ function obvert(agent::Agent)
         end
     end
 
-   # println(probabilityTable)
-    
     for message in 1:n
         agent.m2s[message]=argmax(probabilityTable[:,message])
     end

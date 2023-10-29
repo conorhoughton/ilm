@@ -36,6 +36,26 @@ function valueToBinaryVector(bitN::Int,value::Int)
     
 end
 
+
+function bV2I(bVector::Vector{Int})
+    binaryVectorToInteger(bVector)
+end
+
+function binaryVectorToInteger(binVector::Vector{Int})
+    if all(x -> x == 0 || x == 1, binVector)
+        int_value = 0
+        n = length(binVector)
+        
+        for (index, bit) in enumerate(reverse(binVector))
+            int_value += bit * 2^(index - 1)
+        end
+        
+        return int_value
+    else
+        throw(ArgumentError("Input vector must contain only zeros and ones"))
+    end
+end
+
 function probabilityOfM(message,prob)
     p=1.0
     for i in 1:length(prob)
