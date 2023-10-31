@@ -6,7 +6,7 @@ n=8
 bottleneckN=50
 constrastN=0
 
-lossMSE(nn, x,y)= Flux.mse(nn(x), y)
+lossMSE(nn, x, y)= Flux.mse(nn(x), y)
 
 loss(nn, x,y)= lossMSE(nn,x,y)
 
@@ -19,20 +19,16 @@ numEpochs=20
 
 generationN=40
 
-child=makeAgent(n)
-    
+parent=makeAgent(n)
+
 for generation in 1:generationN
 
-    global(child)
-
-    exemplars = randperm(2^n)[1:bottleneckN]
-
-    makeTable(child,exemplars)
-
-    parentTable=child.m2sTable
+    global(parent)
 
     child=makeAgent(n)
-        
+    
+    exemplars = randperm(2^n)[1:bottleneckN]
+
     totalLoss=0.0
     
     for epoch in 1:numEpochs
@@ -40,17 +36,17 @@ for generation in 1:generationN
         shuffle!(exemplars)
 
         for meaning in exemplars
-            dataI=[(v2BV(n,meaning-1),v2BV(n,parentTable[meaning]-1))]
+            dataI=[(v2BV(n,meaning-1),round.(parent.m2s(v2BV(n,meaning-1))))]
             Flux.train!(loss, child.m2s, dataI, optimizerL)
             if epoch==numEpochs
                 totalLoss+=loss(child.m2s,dataI[1][1],dataI[1][2])
             end
         end
-        
-        
+                
     end
     
     println(generation," ",expressivity(child)," ",totalLoss)
+    parent=deepcopy(child)
     
 end
         
