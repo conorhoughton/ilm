@@ -4,7 +4,7 @@ trains it
 records the performance against generation
 =#
 
-using Statistics,DataFrames,Gadfly
+using Statistics,DataFrames,Gadfly,ProgressMeter
 import Cairo, Fontconfig
 
 include("simple_agent.jl")
@@ -26,12 +26,13 @@ numEpochs=20
 
 generationN=40
 
-trialsN=50
+trialsN=5
 
 expressMatrix=Matrix{Float64}(undef,generationN,trialsN)
 composeMatrix=Matrix{Float64}(undef,generationN,trialsN)
+stableMatrix =Matrix{Float64}(undef,generationN,trialsN)
 
-
+progress= Progress(trialsN*generationN)
 
 for trialC in 1:trialsN
 
@@ -41,7 +42,7 @@ for trialC in 1:trialsN
 
     for generation in 1:generationN
         
-         shuffled = randperm(2^n)
+        shuffled = randperm(2^n)
         
         exemplars = shuffled[1:bottleneckN]
 
@@ -65,42 +66,39 @@ for trialC in 1:trialsN
         
         end
 
-        obvert(child)
+        next!(progress)
         
+        obvert(child)
+
+        oldParent=copy(parent)
         parent=copy(child.m2s)
-    
-        #println(generation," ",expressivity(child)," ",compositionality(child))
+        stableMatrix[generation,trialC]=stability(parent,oldParent)    
     
     end
 
+    
+    
 end
-        
-expressMu=vec(mean(expressMatrix, dims=2))
-expressStdDev = vec(std(expressMatrix, dims=2))
 
-expressMin = expressMu .- expressStdDev
-expressMax = expressMu .+ expressStdDev
+
+function plotProperty(propertyMatrix,xAxis,filename,color)
+    mu=vec(mean(propertyMatrix, dims=2))
+    stdDev = vec(std(propertyMatrix, dims=2))
+    
+    min = mu .- stdDev
+    max = mu .+ stdDev
+
+    df = DataFrame(x=xAxis, y=mu, yMin=min,yMax=max)
+
+    plt=plot(layer(df,x=:x,y=:y, Geom.line),layer(df,x=:x,ymin=:yMin,ymax=:yMax,Geom.ribbon),Theme(background_color=colorant"white",default_color=color))
+
+    draw(PNG(filename, 6inch, 4inch),plt)
+
+end
 
 generations=collect(0:generationN-1)
 
-expressDf = DataFrame(X=generations, Y=expressMu, StdDev=expressStdDev,YMin=expressMin,YMax=expressMax)
-
-plt=plot(layer(expressDf,x=:X,y=:Y, Geom.line),layer(expressDf,x=:X,ymin=:YMin,ymax=:YMax,Geom.ribbon),Theme(background_color=colorant"white"))
-
-draw(PNG("fig1_express.png", 6inch, 4inch),plt)
-
-       
-composeMu=vec(mean(composeMatrix, dims=2))
-composeStdDev = vec(std(composeMatrix, dims=2))
-
-composeMin = composeMu .- composeStdDev
-composeMax = composeMu .+ composeStdDev
-
-composeDf = DataFrame(X=generations, Y=composeMu, StdDev=composeStdDev,YMin=composeMin,YMax=composeMax)
-
-
-plt=plot(layer(composeDf,x=:X,y=:Y, Geom.line),layer(composeDf,x=:X,ymin=:YMin,ymax=:YMax,Geom.ribbon),Theme(background_color=colorant"white",default_color="orange"))
-
-
-draw(PNG("fig1_compose.png", 6inch, 4inch), plt)
+plotProperty(expressMatrix,generations,"fig1_express.png","blue")
+plotProperty(composeMatrix,generations,"fig1_compose.png","orange")
+plotProperty(stableMatrix,generations,"fig1_stable.png","purple")
 

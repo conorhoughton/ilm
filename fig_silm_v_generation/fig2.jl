@@ -4,7 +4,7 @@ trains it
 run it until it become compositional and expressive, plot the number of generations
 =#
 
-using Statistics,DataFrames,Gadfly
+using Statistics,DataFrames,Gadfly,ProgressMeter
 import Cairo, Fontconfig
 
 include("simple_agent.jl")
@@ -22,21 +22,23 @@ optimizerL=Flux.Optimise.Descent(learningRateL)
 
 numEpochs=20
 
-generationMax=100
+generationMax=200
 
-trialsN=20
+trialsN=50
 
 cutOff=0.9
 
-bottleMin=5
-bottleMax=180
-bottleStep=20
+bottleMin=30
+bottleMax=50
+bottleStep=2
 
 
 bottleV=collect(bottleMin:bottleStep:bottleMax)
 bottleT=length(bottleV)
 
 waitMatrix=Matrix{Float64}(undef,bottleT,trialsN)
+
+progress = Progress(bottleT)
 
 for bottleC in 1:bottleT
 
@@ -89,11 +91,15 @@ for bottleC in 1:bottleT
         end
 
         waitMatrix[bottleC,trialC]=generation
+
+        
         
     end
+
+    next!(progress)
     
 end
-        
+
 mu=vec(mean(waitMatrix, dims=2))
 stdDev = vec(std(waitMatrix, dims=2))
 

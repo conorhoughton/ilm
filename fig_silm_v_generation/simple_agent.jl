@@ -57,7 +57,18 @@ function expressivity(agent::Agent)
     sum(onto)/n
 end
 
+function stability(table1::Vector,table2::Vector)
+    total=0.0
+    for i in 1:length(table1)
+        if table1[i]==table2[i]
+            total+=1
+        end
+    end
+    total/length(table1)
+end
+        
 function compositionality(agent::Agent)
+    
     n=agent.bitN
     messageMatrix=Matrix{Int64}(undef,n,2^n)
     signalMatrix =Matrix{Int64}(undef,n,2^n)
@@ -71,11 +82,11 @@ function compositionality(agent::Agent)
         end
     end
 
-    entropy=0.0
-    
-    for messageCol in 1:n
-        thisColEntropy=0.0
+    entropy=Float64[]
 
+    for messageCol in 1:n
+        
+        thisColEntropy=0
         for signalCol in 1:n
             p=0.0
             for rowC in 1:2^n
@@ -87,11 +98,11 @@ function compositionality(agent::Agent)
             thisColEntropy+=calculateEntropy(p)
         end
 
-        entropy+=thisColEntropy/n
+        append!(entropy,thisColEntropy/n)
 
     end
 
-    n-entropy
+    1-maximum(entropy)
 
 end
         
