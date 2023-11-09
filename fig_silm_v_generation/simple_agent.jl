@@ -8,11 +8,11 @@ mutable struct Agent
 end
 
 function makeAgent(bitN::Int,hiddenN::Int)
-    Agent(n,Chain(Dense(bitN=>hiddenN,sigmoid),Dense(hiddenN=>bitN,sigmoid)), Vector{Int64}(undef, 2^bitN))
+    Agent(bitN,Chain(Dense(bitN=>hiddenN,sigmoid),Dense(hiddenN=>bitN,sigmoid)), Vector{Int64}(undef, 2^bitN))
 end
 
-function makeAgent(n::Int)
-    makeAgent(n,n)
+function makeAgent(bitN::Int)
+    makeAgent(bitN,bitN)
 end
 
 function s2m(signal::Vector{Int},agent::Agent)
@@ -82,11 +82,12 @@ function compositionality(agent::Agent)
         end
     end
 
-    entropy=Float64[]
+    entropy=0.0
 
     for messageCol in 1:n
         
-        thisColEntropy=0
+        thisColEntropy=zeros(Float64,n)
+        
         for signalCol in 1:n
             p=0.0
             for rowC in 1:2^n
@@ -95,14 +96,14 @@ function compositionality(agent::Agent)
                 end
             end
             p/=2^(n-1)
-            thisColEntropy+=calculateEntropy(p)
+            thisColEntropy[signalCol]=calculateEntropy(p)
         end
 
-        append!(entropy,thisColEntropy/n)
+        entropy+=minimum(thisColEntropy)
 
     end
 
-    1-maximum(entropy)
+    1-entropy/n
 
 end
         

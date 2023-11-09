@@ -24,13 +24,13 @@ numEpochs=20
 
 generationMax=200
 
-trialsN=50
+trialsN=20
 
-cutOff=0.9
+cutOff=0.95
 
 bottleMin=30
-bottleMax=50
-bottleStep=2
+bottleMax=250
+bottleStep=10
 
 
 bottleV=collect(bottleMin:bottleStep:bottleMax)
@@ -38,7 +38,7 @@ bottleT=length(bottleV)
 
 waitMatrix=Matrix{Float64}(undef,bottleT,trialsN)
 
-progress = Progress(bottleT)
+progress = Progress(bottleT*trialsN)
 
 for bottleC in 1:bottleT
 
@@ -88,15 +88,16 @@ for bottleC in 1:bottleT
 #=            println(generation," ",bottleNeckC," ",express," ",compose," ",cutOff," ",
             (generation <= generationMax) && (express<cutOff || compose<cutOff))
 =#
+
         end
-
-        waitMatrix[bottleC,trialC]=generation
-
         
+        waitMatrix[bottleC,trialC]=generation
+                
+        next!(progress)
         
     end
 
-    next!(progress)
+
     
 end
 
