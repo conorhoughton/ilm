@@ -1,6 +1,8 @@
 
 using Random
 
+rebased(value,bg)=(value-bg)/(1.0-bg)
+
 function makeRandom(n::Int)
     rand(0:1,n)
 end

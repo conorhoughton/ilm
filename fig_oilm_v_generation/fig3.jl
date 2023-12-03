@@ -21,19 +21,41 @@ numEpochs=20
 
 generationMax=200
 
-trialsN=20
+trialsN=25
 
 cutOff=0.95
 
-bottleMin=8
+bottleMin=15
 bottleStep=1
 
 bitNV=Int64[]
 bottleBestV=Float64[]
 generationBestV=Float64[]
 
-for bitN in 5:7
+bitN0=5
+bitN1=11
 
+backgroundN=20
+
+for bitN in bitN0:bitN1
+
+    bgCompose=0.0::Float64
+    bgExpress=0.0::Float64
+
+    for backgroundC in 1:backgroundN
+
+        child=makeAgent(bitN)
+        obvert(child)
+        GC.gc()
+        anotherChild=makeAgent(bitN)
+        obvert(anotherChild)
+        GC.gc()
+        bgCompose+=0.5*(compositionality(child)+compositionality(anotherChild))/backgroundN
+        bgExpress+=0.5*(expressivity(child)+expressivity(anotherChild))/backgroundN
+     
+    end
+
+    
     global(bottleMin,bottleStep)
     
     genBest=generationMax
@@ -80,13 +102,15 @@ for bitN in 5:7
                     end
                     
                 end
-                
+
+
                 obvert(child)
+                GC.gc()
                 
                 parent=copy(child.m2s)
                 
-                express=expressivity(child)
-                compose=compositionality(child)
+                express=rebased(expressivity(child),bgExpress)
+                compose=rebased(compositionality(child),bgCompose)
                 
                 generation+=1
                 
@@ -117,10 +141,10 @@ for bitN in 5:7
     
 end
 
-df = DataFrame(n = bitNV, bottleneck = bottleBestV, generations = generationBestV)
+#df = DataFrame(n = bitNV, bottleneck = bottleBestV, generations = generationBestV)
 
-CSV.write("fig3.csv", df)
+#CSV.write("fig3.csv", df)
 
-plt=plot(df, x=:n, y=:bottleneck, Geom.point,Theme(background_color=colorant"white",default_color="red"), Geom.smooth(method=:lm))
-draw(PNG("fig3.png", 6inch, 4inch),plt)
+#plt=plot(df, x=:n, y=:bottleneck, Geom.point,Theme(background_color=colorant"white",default_color="red"), Geom.smooth(method=:lm))
+#draw(PNG("fig3.png", 6inch, 4inch),plt)
 

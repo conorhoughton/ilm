@@ -11,9 +11,21 @@ function makeAgent(bitN::Int,hiddenN::Int)
     Agent(bitN,Chain(Dense(bitN=>hiddenN,sigmoid),Dense(hiddenN=>bitN,sigmoid)), Vector{Int64}(undef, 2^bitN))
 end
 
+
+function makeAgentReLU(bitN::Int,hiddenN::Int)
+    Agent(bitN,Chain(Dense(bitN=>hiddenN,relu),Dense(hiddenN=>bitN,sigmoid)), Vector{Int64}(undef, 2^bitN))
+end
+
+
 function makeAgent(bitN::Int)
     makeAgent(bitN,bitN)
 end
+
+
+function makeAgentReLU(bitN::Int)
+    makeAgentReLU(bitN,bitN)
+end
+
 
 function s2m(signal::Vector{Int},agent::Agent)
     agent.s2m(signal)
@@ -32,19 +44,21 @@ function obvert(agent::Agent)
     probabilityTable=Matrix{Float64}(undef,n,n)
     
     for signal in 0:n-1
+        
         nnSignal=s2m(agent,valueToBinaryVector(agent.bitN,signal))
+        
         for message in 0:n-1
             messageVector=valueToBinaryVector(agent.bitN,message)
             probabilityTable[signal+1,message+1]=probabilityOfM(messageVector,nnSignal)
         end
     end
 
-   # println(probabilityTable)
-    
     for message in 1:n
         agent.m2s[message]=argmax(probabilityTable[:,message])
     end
 
+    
+    
 end
 
 
@@ -66,10 +80,13 @@ function stability(table1::Vector,table2::Vector)
     end
     total/length(table1)
 end
-        
+
+
+
 function compositionality(agent::Agent)
     
     n=agent.bitN
+
     messageMatrix=Matrix{Int64}(undef,n,2^n)
     signalMatrix =Matrix{Int64}(undef,n,2^n)
 
@@ -106,7 +123,67 @@ function compositionality(agent::Agent)
     1-entropy/n
 
 end
+
+
+function newCompose(agent::Agent)
+
+    n=agent.bitN
+    
+    messageMatrix=Matrix{Int64}(undef,n,2^n)
+    signalMatrix =Matrix{Int64}(undef,n,2^n)
+
+    for messageC in 1:2^n
+        message=v2BV(n,messageC-1)
+        signal =v2BV(n,agent.m2s[messageC]-1)
+        for i in 1:n
+            messageMatrix[i,messageC]=message[i]
+            signalMatrix[i,messageC]=signal[i]
+        end
+    end
+
+    entropy=0.0
+
+    signalColV=collect(1:n)
+
+    entropyV=[Vector{Float64}() for _ in 1:n]
+    
+    for messageCol in 1:n
+
+        thisColEntropy=ones(Float64,n)
         
+        for signalCol in 1:n
+            p=0.0
+            for rowC in 1:2^n
+                if messageMatrix[messageCol,rowC]*signalMatrix[signalCol,rowC]==1
+                    p+=1.0
+                end
+            end
+            p/=2^(n-1)
+            thisColEntropy[signalCol]=calculateEntropy(p)
+        end
+
+        minVal, minIndex = findmin(thisColEntropy)
+
+        append!(entropyV[minIndex],minVal)
+        
+    end
+
+    print(entropyV)
+
+    entropy=0.0
+    
+    for i in 1:n
+        if length(entropyV[i])>0
+            entropy+=minimum(entropyV[i])
+        else
+            entropy+=1
+        end
+    end
+
+    1-entropy/n
+    
+end
+
 
 
     

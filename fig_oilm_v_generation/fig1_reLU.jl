@@ -2,6 +2,7 @@
 makes a simple agent
 trains it
 records the performance against generation
+uses a relu hidden layer
 =#
 
 using Statistics,DataFrames,Gadfly,ProgressMeter
@@ -26,7 +27,7 @@ numEpochs=20
 
 generationN=40
 
-trialsN=5
+trialsN=25
 
 expressMatrix=Matrix{Float64}(undef,generationN,trialsN)
 composeMatrix=Matrix{Float64}(undef,generationN,trialsN)
@@ -36,7 +37,7 @@ progress= Progress(trialsN*generationN)
 
 for trialC in 1:trialsN
 
-    child = makeAgent(n)
+    child = makeAgentReLU(n)
     obvert(child)
     parent=copy(child.m2s)
 
@@ -98,7 +99,7 @@ end
 
 generations=collect(0:generationN-1)
 
-plotProperty(expressMatrix,generations,"fig1_express.png","blue")
-plotProperty(composeMatrix,generations,"fig1_compose.png","orange")
-plotProperty(stableMatrix,generations,"fig1_stable.png","purple")
+plotProperty(expressMatrix,generations,"fig1_relu_express.png","blue")
+plotProperty(composeMatrix,generations,"fig1_relu_compose.png","orange")
+plotProperty(stableMatrix,generations,"fig1_relu_stable.png","purple")
 
